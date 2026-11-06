@@ -1,0 +1,119 @@
+name: Rock Kernel Builder
+
+on:
+  workflow_dispatch:
+    inputs:
+      kernel_source:
+        description: Kernel source repository
+        required: true
+        type: choice
+        options:
+          - Anomali1304
+          - Asmodeus7999
+        default: Anomali1304
+      zip_prefix:
+        description: ZIP filename prefix
+        required: true
+        type: string
+        default: Rock
+      kernel_name:
+        description: Kernel display name
+        required: true
+        type: string
+        default: Rock Kernel
+      localversion:
+        description: Kernel localversion suffix
+        required: true
+        type: string
+        default: -Rock
+      clang_vendor:
+        description: Clang toolchain
+        required: true
+        type: choice
+        options:
+          - GKI
+          - ZyC
+          - Custom
+        default: GKI
+      clang_custom_url:
+        description: Custom Clang archive URL, required only for Custom
+        required: false
+        type: string
+        default: ""
+      lto:
+        description: Link-time optimization mode
+        required: true
+        type: choice
+        options:
+          - Thin
+          - Full
+        default: Thin
+      root_variant:
+        description: Root integration
+        required: true
+        type: choice
+        options:
+          - Vanilla
+          - KSU Next
+          - BakaSU
+        default: Vanilla
+      modules:
+        description: Module names separated by commas. Empty builds all modules.
+        required: false
+        type: string
+        default: ""
+      clone_external_modules:
+        description: Clone fixed external modules from Asmodeus7999/MTK_kernel_modules
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rock-kernel-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 240
+    env:
+      KERNEL_SOURCE: ${{ inputs.kernel_source }}
+      MODULES: ${{ inputs.modules }}
+      ROOT_VARIANT: ${{ inputs.root_variant == 'Vanilla' && 'VANILLA' || inputs.root_variant == 'KSU Next' && 'KSUN' || inputs.root_variant == 'BakaSU' && 'BAKASU' }}
+      CLANG_VENDOR: ${{ inputs.clang_vendor }}
+      CLANG_CUSTOM_URL: ${{ inputs.clang_custom_url }}
+      LTO_MODE: ${{ inputs.lto }}
+      ZIP_PREFIX: ${{ inputs.zip_prefix }}
+      KERNEL_NAME: ${{ inputs.kernel_name }}
+      KERNEL_LOCALVERSION: ${{ inputs.localversion }}
+      CLONE_EXTERNAL_MODULES: ${{ inputs.clone_external_modules }}
+    steps:
+      - name: Checkout builder
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc bison build-essential ccache curl dwarves flex git jq libelf-dev libssl-dev python-is-python3 python3 rsync unzip wget zip zstd
+
+      - name: Build kernel and package modules
+        run: bash build.sh
+
+      - name: Upload flashable kernel ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.zip_prefix }}-Kernel-${{ inputs.root_variant }}
+          path: dist/*-Kernel-*.zip
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload modules ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.zip_prefix }}-Modules-${{ inputs.root_variant }}
+          path: dist/*-Modules-*.zip
+          if-no-files-found: error
+          retention-days: 14
