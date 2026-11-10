@@ -17,6 +17,7 @@ Automated kernel builder for Xiaomi Rock (MT6789), powered by GitHub Actions.
 | External Kernel Modules | Complete |
 | AnyKernel3 Packaging | Complete |
 | Separate Kernel / Modules ZIP | Complete |
+| Replaceable MT6789 GPU OPP Header | Complete |
 
 ## Features
 
@@ -27,6 +28,7 @@ Automated kernel builder for Xiaomi Rock (MT6789), powered by GitHub Actions.
 - Build all external modules or select specific modules.
 - Generate separate flashable kernel and modules ZIP files.
 - Configure kernel name, local version, and ZIP prefix.
+- Override the MT6789 GPU frequency and voltage table from `gpu/gpufreq_mt6789.h`.
 
 ## Build
 
@@ -49,6 +51,10 @@ Automated kernel builder for Xiaomi Rock (MT6789), powered by GitHub Actions.
 | Module Selection | All or comma-separated names |
 
 Leave the module selection empty to build all configured modules.
+
+## GPU Overclock
+
+The builder copies `gpu/gpufreq_mt6789.h` over the kernel source header before compilation. Edit or replace this file to change the MT6789 GPU OPP frequency and voltage table. No workflow input is required. Keep the OPP indices, voltage steps, and POSDIV settings consistent with the GPU driver.
 
 ## Output
 
