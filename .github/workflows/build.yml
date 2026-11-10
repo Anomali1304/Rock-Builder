@@ -62,6 +62,29 @@ on:
         required: false
         type: string
         default: ""
+      gpu_oc_target:
+        description: Maximum GPU frequency. 1100 MHz keeps the stock table.
+        required: true
+        type: choice
+        options:
+          - "1100"
+          - "1125"
+          - "1150"
+          - "1175"
+          - "1200"
+          - "1225"
+          - "1250"
+          - "1275"
+          - "1300"
+          - "1325"
+          - "1350"
+          - "1375"
+          - "1400"
+          - "1425"
+          - "1450"
+          - "1475"
+          - "1500"
+        default: "1100"
       clone_external_modules:
         description: Clone fixed external modules from Asmodeus7999/MTK_kernel_modules
         required: true
@@ -90,6 +113,7 @@ jobs:
       KERNEL_NAME: ${{ inputs.kernel_name }}
       KERNEL_LOCALVERSION: ${{ inputs.localversion }}
       CLONE_EXTERNAL_MODULES: ${{ inputs.clone_external_modules }}
+      GPU_OC_TARGET: ${{ inputs.gpu_oc_target }}
     steps:
       - name: Checkout builder
         uses: actions/checkout@v4
