@@ -31,6 +31,7 @@ Automated kernel builder for Xiaomi Rock (MT6789), powered by GitHub Actions.
 - Configure kernel name, local version, and ZIP prefix.
 - Override the MT6789 GPU frequency and voltage table from `gpu/gpufreq_mt6789.h`.
 - Select a GPU maximum frequency from 1100 to 1500 MHz in 25 MHz steps.
+- Automatically patch `LIMIT_THERMAL_AP` to allow generated GPU OPPs when GPU OC is enabled. Other GPU limiters remain active.
 
 ## Build
 
