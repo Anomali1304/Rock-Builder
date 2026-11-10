@@ -20,12 +20,12 @@ on:
         description: Kernel display name
         required: true
         type: string
-        default: Rock Kernel
+        default: AlterEgo
       localversion:
         description: Kernel localversion suffix
         required: true
         type: string
-        default: -Rock
+        default: -AlterEgo
       clang_vendor:
         description: Clang toolchain
         required: true
