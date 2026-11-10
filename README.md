@@ -18,6 +18,7 @@ Automated kernel builder for Xiaomi Rock (MT6789), powered by GitHub Actions.
 | AnyKernel3 Packaging | Complete |
 | Separate Kernel / Modules ZIP | Complete |
 | Replaceable MT6789 GPU OPP Header | Complete |
+| Automatic GPU OPP Overclock | Complete |
 
 ## Features
 
@@ -29,6 +30,7 @@ Automated kernel builder for Xiaomi Rock (MT6789), powered by GitHub Actions.
 - Generate separate flashable kernel and modules ZIP files.
 - Configure kernel name, local version, and ZIP prefix.
 - Override the MT6789 GPU frequency and voltage table from `gpu/gpufreq_mt6789.h`.
+- Select a GPU maximum frequency from 1100 to 1500 MHz in 25 MHz steps.
 
 ## Build
 
@@ -48,13 +50,14 @@ Automated kernel builder for Xiaomi Rock (MT6789), powered by GitHub Actions.
 | LTO | Thin, Full |
 | Root Variant | Vanilla, KSU Next, BakaSU |
 | External Modules | Enabled or Disabled |
+| GPU OC Target | 1100 to 1500 MHz, 25 MHz steps |
 | Module Selection | All or comma-separated names |
 
 Leave the module selection empty to build all configured modules.
 
 ## GPU Overclock
 
-The builder copies `gpu/gpufreq_mt6789.h` over the kernel source header before compilation. Edit or replace this file to change the MT6789 GPU OPP frequency and voltage table. No workflow input is required. Keep the OPP indices, voltage steps, and POSDIV settings consistent with the GPU driver.
+The builder copies `gpu/gpufreq_mt6789.h` over the kernel source header before compilation. Set the GPU OC target in the workflow. The generator adds OPPs above 1100 MHz in 25 MHz steps. It extrapolates voltage from the first five stock OPPs, rounds up to the 625-unit PMIC step, validates hardware limits, and updates AVS, aging, segment, and MCL50 indices. AVS remains enabled. Calculated voltage is a starting point and does not guarantee silicon stability.
 
 ## Output
 
