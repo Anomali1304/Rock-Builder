@@ -51,7 +51,7 @@ Automated kernel builder for Xiaomi Rock (MT6789), powered by GitHub Actions.
 | Root Variant | Vanilla, KSU Next, BakaSU |
 | External Modules | Enabled or Disabled |
 | GPU OC Target | 1100 to 1500 MHz, 25 MHz steps |
-| Module Selection | All or comma-separated names |
+| Module Selection | Required list by default, or comma-separated names |
 
 Leave the module selection empty to build all configured modules.
 
