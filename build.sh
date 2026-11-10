@@ -199,7 +199,7 @@ PY
         export LD_LIBRARY_PATH="$clang_lib_dir:$LD_LIBRARY_PATH"
     fi
     export CLANG_BIN="$clang_bin_dir/clang"
-    export KBUILD_COMPILER_STRING="$(\"$CLANG_BIN\" --version | sed -n '1p')"
+    export KBUILD_COMPILER_STRING="$("$CLANG_BIN" --version | sed -n '1p')"
     log "Compiler: $KBUILD_COMPILER_STRING"
     log "Compiler path: $CLANG_BIN"
 }
@@ -310,7 +310,7 @@ compiler_c = json.dumps(compiler)
 name_c = json.dumps(display_name)
 
 start = source.index("const char linux_proc_banner[] =")
-end = source.index("\\n\\nBUILD_SALT;", start)
+end = source.index("\n\nBUILD_SALT;", start)
 source = source[:start] + (
     "const char linux_proc_banner[] =\\n"
     '\\t"%s version %s"\\n'
