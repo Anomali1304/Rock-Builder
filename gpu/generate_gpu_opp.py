@@ -34,7 +34,7 @@ samples = stock[:5]
 mf = sum(x[0] for x in samples) / 5
 mv = sum(x[1] for x in samples) / 5
 slope = sum((x[0]-mf)*(x[1]-mv) for x in samples) / sum((x[0]-mf)**2 for x in samples)
-if slope >= 0:
+if slope <= 0:
     raise SystemExit("Invalid stock voltage slope")
 
 generated = []
