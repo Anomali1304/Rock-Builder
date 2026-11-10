@@ -276,6 +276,13 @@ log "Replacing GKI common source with selected Rock kernel"
 rm -rf "$KERNEL_DIR"
 git clone --depth=1 --single-branch --branch "$KERNEL_BRANCH" "$KERNEL_REPO" "$KERNEL_DIR"
 
+GPU_HEADER_SOURCE="$ROOT_DIR/gpu/gpufreq_mt6789.h"
+GPU_HEADER_TARGET="$KERNEL_DIR/drivers/gpu/mediatek/gpufreq/v2/include/gpufreq_mt6789.h"
+[[ -s "$GPU_HEADER_SOURCE" ]] || die "Custom GPU header missing: $GPU_HEADER_SOURCE"
+[[ -d "$(dirname "$GPU_HEADER_TARGET")" ]] || die "MT6789 GPU header directory missing in selected kernel source"
+cp -f "$GPU_HEADER_SOURCE" "$GPU_HEADER_TARGET"
+log "Applied custom MT6789 GPU frequency table: gpu/gpufreq_mt6789.h"
+
 [[ -s "$KERNEL_DIR/build.config.rock" ]] || die "build.config.rock not found in kernel source"
 [[ -s "$WORKSPACE/build/build.sh" ]] || die "GKI build/build.sh not found in workspace"
 
