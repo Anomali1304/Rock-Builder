@@ -435,7 +435,31 @@ mapfile -t ALL_MODULES < <(find "$OUT_DIR" -type f -name '*.ko' -print | sort -u
 
 SELECTED_MODULES=()
 if [[ -z "${MODULE_SELECTION//[[:space:]]/}" ]]; then
-    SELECTED_MODULES=("${ALL_MODULES[@]}")
+    REQUIRED_MODULES_FILE="$ROOT_DIR/modules/required_modules.txt"
+    [[ -s "$REQUIRED_MODULES_FILE" ]] || die "Required module list missing: $REQUIRED_MODULES_FILE"
+    declare -A BUILT_MODULE_MAP=()
+    for module in "${ALL_MODULES[@]}"; do
+        BUILT_MODULE_MAP["$(basename "$module")"]="$module"
+    done
+    MISSING_MODULES=()
+    while IFS= read -r required || [[ -n "$required" ]]; do
+        required="${required%%#*}"
+        required="$(printf '%s' "$required" | xargs)"
+        [[ -n "$required" ]] || continue
+        [[ "$required" == *.ko ]] || required="$required.ko"
+        if [[ -n "${BUILT_MODULE_MAP[$required]:-}" ]]; then
+            SELECTED_MODULES+=("${BUILT_MODULE_MAP[$required]}")
+        else
+            MISSING_MODULES+=("$required")
+        fi
+    done < "$REQUIRED_MODULES_FILE"
+    (("${#MISSING_MODULES[@]}" == 0)) || {
+        printf '[ERROR] Required modules were not built:\n' >&2
+        printf '  %s\n' "${MISSING_MODULES[@]}" >&2
+        exit 1
+    }
+    (("${#SELECTED_MODULES[@]}" > 0)) || die "Required module list is empty"
+    log "Using required module allowlist: ${#SELECTED_MODULES[@]} modules"
 else
     IFS=',' read -ra REQUESTED <<< "$MODULE_SELECTION"
     for requested in "${REQUESTED[@]}"; do
@@ -522,13 +546,13 @@ done
 
 MODULE_STAGE="$WORK_DIR/modules-package"
 rm -rf "$MODULE_STAGE"
-mkdir -p "$MODULE_STAGE/modules/system/lib/modules"
+mkdir -p "$MODULE_STAGE/lib/modules"
 for module in "${SELECTED_MODULES[@]}"; do
-    cp "$module" "$MODULE_STAGE/modules/system/lib/modules/"
+    cp "$module" "$MODULE_STAGE/lib/modules/"
 done
 (
     cd "$MODULE_STAGE"
-    zip -qr9 "$RELEASE_DIR/$MODULES_ZIP" modules
+    zip -qr9 "$RELEASE_DIR/$MODULES_ZIP" lib
 )
 unzip -tq "$RELEASE_DIR/$MODULES_ZIP" >/dev/null
 
