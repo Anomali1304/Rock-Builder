@@ -312,18 +312,18 @@ name_c = json.dumps(display_name)
 start = source.index("const char linux_proc_banner[] =")
 end = source.index("\n\nBUILD_SALT;", start)
 source = source[:start] + (
-    "const char linux_proc_banner[] =\\n"
-    '\\t"%s version %s"\\n'
-    f'\\t" (" {compiler_c} ") %s\\\\n";'
+    "const char linux_proc_banner[] =\n"
+    '\t"%s version %s"\n'
+    f'\t" (" {compiler_c} ") %s\\n";'
 ) + source[end:]
 
 start = source.index("const char linux_banner[] =")
 end = source.index(";", start) + 1
 source = source[:start] + (
-    "const char linux_banner[] =\\n"
-    '\\t"Linux version " UTS_RELEASE\\n'
-    f'\\t" (" {compiler_c} ") " UTS_VERSION "\\\\n";'
-) + source[end:]
+    "const char linux_banner[] =\n"
+    '\t"Linux version " UTS_RELEASE\n'
+    f'\t" (" {compiler_c} ") " UTS_VERSION "\\n";'
+)
 version_file.write_text(source)
 PY
 if [[ "$CLONE_EXTERNAL" == "true" ]]; then
