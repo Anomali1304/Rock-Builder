@@ -199,7 +199,7 @@ PY
         export LD_LIBRARY_PATH="$clang_lib_dir:$LD_LIBRARY_PATH"
     fi
     export CLANG_BIN="$clang_bin_dir/clang"
-    export KBUILD_COMPILER_STRING="$("$CLANG_BIN" --version | head -1 | sed -E 's/[[:space:]]+\(.*$//')"
+    export KBUILD_COMPILER_STRING="$(\"$CLANG_BIN\" --version | sed -n '1p')"
     log "Compiler: $KBUILD_COMPILER_STRING"
     log "Compiler path: $CLANG_BIN"
 }
@@ -220,8 +220,8 @@ esac
 MODULE_SELECTION="${MODULES:-}"
 ROOT_VARIANT="${ROOT_VARIANT:-VANILLA}"
 ZIP_PREFIX="${ZIP_PREFIX:-Rock}"
-KERNEL_NAME="${KERNEL_NAME:-Rock Kernel}"
-KERNEL_LOCALVERSION="${KERNEL_LOCALVERSION:--Rock}"
+KERNEL_NAME="${KERNEL_NAME:-AlterEgo}"
+KERNEL_LOCALVERSION="${KERNEL_LOCALVERSION:--AlterEgo}"
 # Remove a trailing plus marker from the displayed release.
 KERNEL_LOCALVERSION="${KERNEL_LOCALVERSION%+}"
 CLONE_EXTERNAL="${CLONE_EXTERNAL_MODULES:-false}"
@@ -310,21 +310,19 @@ compiler_c = json.dumps(compiler)
 name_c = json.dumps(display_name)
 
 start = source.index("const char linux_proc_banner[] =")
-end = source.index("\n\nBUILD_SALT;", start)
+end = source.index("\\n\\nBUILD_SALT;", start)
 source = source[:start] + (
-    "const char linux_proc_banner[] =\n"
-    '\t"%s version %s"\n'
-    f'\t" (" {name_c} ")"\n'
-    f'\t" (" {compiler_c} ")\\n";'
+    "const char linux_proc_banner[] =\\n"
+    '\\t"%s version %s"\\n'
+    f'\\t" (" {compiler_c} ") %s\\\\n";'
 ) + source[end:]
 
 start = source.index("const char linux_banner[] =")
 end = source.index(";", start) + 1
 source = source[:start] + (
-    "const char linux_banner[] =\n"
-    '\t"Linux version " UTS_RELEASE\n'
-    f'\t" (" {name_c} ")"\n'
-    f'\t" (" {compiler_c} ")\\n";'
+    "const char linux_banner[] =\\n"
+    '\\t"Linux version " UTS_RELEASE\\n'
+    f'\\t" (" {compiler_c} ") " UTS_VERSION "\\\\n";'
 ) + source[end:]
 version_file.write_text(source)
 PY
@@ -374,7 +372,7 @@ KBUILD_BUILD_HOST="$ZIP_PREFIX"
 export KBUILD_BUILD_USER KBUILD_BUILD_HOST
 EOF
 
-# Use the selected Clang version in /proc/version, not the GKI default compiler banner.
+# Keep the selected compiler identity intact and omit linker metadata.
 python3 - "$KERNEL_DIR/scripts/mkcompile_h" <<'PY'
 import pathlib
 import sys
