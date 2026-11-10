@@ -47,6 +47,8 @@ for freq in freqs:
     generated.append((freq, volt, volt, stock[0][3], stock[0][4], 0))
     last_v = volt
 
+generated.reverse()
+
 lines = []
 for i, (freq, volt, vsram, posdiv, aging, power) in enumerate(generated):
     lines.append(f"\tGPUOP({freq}, {volt}, {vsram}, {posdiv}, {aging}, {power}), /* {i:2d} generated */")
