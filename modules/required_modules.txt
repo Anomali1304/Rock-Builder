@@ -5,7 +5,6 @@ atf_logger.ko
 audio_ipi.ko
 ax88179_178a.ko
 backlight_cooling.ko
-binder_gki.ko
 binder_prio.ko
 board_temp.ko
 bt_drv_connac1x.ko
@@ -47,7 +46,6 @@ fhctl.ko
 flashlight.ko
 flashlights-led191.ko
 fmradio_drv_mt6631_6635.ko
-fpsgo.ko
 ft8722.ko
 ged.ko
 gps_drv_stp.ko
@@ -87,12 +85,6 @@ met_scmi_api.ko
 met_sspm_api.ko
 met_vcore_api.ko
 met.ko
-millet_binder.ko
-millet_core.ko
-millet_hs.ko
-millet_oem_cgroup.ko
-millet_pkg.ko
-millet_sig.ko
 mt6358-accdet.ko
 mt6789-mt6366.ko
 mtk_battery_oc_throttling.ko
