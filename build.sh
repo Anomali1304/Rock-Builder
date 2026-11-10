@@ -283,6 +283,11 @@ GPU_HEADER_TARGET="$KERNEL_DIR/drivers/gpu/mediatek/gpufreq/v2/include/gpufreq_m
 cp -f "$GPU_HEADER_SOURCE" "$GPU_HEADER_TARGET"
 log "Applied custom MT6789 GPU frequency table: gpu/gpufreq_mt6789.h"
 
+GPU_OC_TARGET="${GPU_OC_TARGET:-1100}"
+[[ "$GPU_OC_TARGET" =~ ^(1100|1125|1150|1175|1200|1225|1250|1275|1300|1325|1350|1375|1400|1425|1450|1475|1500)$ ]] || die "Invalid GPU_OC_TARGET: $GPU_OC_TARGET"
+python3 "$ROOT_DIR/gpu/generate_gpu_opp.py" "$GPU_HEADER_TARGET" "$GPU_OC_TARGET"
+log "GPU maximum frequency: ${GPU_OC_TARGET} MHz"
+
 [[ -s "$KERNEL_DIR/build.config.rock" ]] || die "build.config.rock not found in kernel source"
 [[ -s "$WORKSPACE/build/build.sh" ]] || die "GKI build/build.sh not found in workspace"
 
