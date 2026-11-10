@@ -288,6 +288,37 @@ GPU_OC_TARGET="${GPU_OC_TARGET:-1100}"
 python3 "$ROOT_DIR/gpu/generate_gpu_opp.py" "$GPU_HEADER_TARGET" "$GPU_OC_TARGET"
 log "GPU maximum frequency: ${GPU_OC_TARGET} MHz"
 
+if (( GPU_OC_TARGET > 1100 )); then
+    GPU_PPM_SOURCE="$KERNEL_DIR/drivers/gpu/mediatek/gpufreq/v2/gpuppm.c"
+    [[ -s "$GPU_PPM_SOURCE" ]] || die "GPU PPM source missing: $GPU_PPM_SOURCE"
+    python3 - "$GPU_PPM_SOURCE" <<'PY'
+import pathlib
+import re
+import sys
+
+path = pathlib.Path(sys.argv[1])
+source = path.read_text()
+pattern = r"(?ms)(\t\tcase LIMIT_THERMAL_AP:\n)(.*?)(?=\n\t\tcase LIMIT_THERMAL_EB:)"
+replacement = (
+    "\\1"
+    "\t\t\t/* Allow generated GPU OPPs above the stock thermal-AP ceiling. */\n"
+    "\t\t\t*ceiling_idx = 0;\n"
+    "\t\t\t*floor_idx = GPUPPM_KEEP_IDX;\n"
+    "\t\t\tbreak;\n"
+)
+updated, count = re.subn(pattern, replacement, source)
+if count != 1:
+    raise SystemExit(f"Expected one LIMIT_THERMAL_AP case in gpuppm.c, found {count}")
+if updated == source:
+    raise SystemExit("LIMIT_THERMAL_AP patch made no changes")
+path.write_text(updated)
+print("LIMIT_THERMAL_AP patched: ceiling forced to OPP 0.")
+PY
+    log "Applied GPU thermal-AP override for GPU overclock"
+else
+    log "GPU OC disabled. Keeping stock thermal-AP behavior."
+fi
+
 [[ -s "$KERNEL_DIR/build.config.rock" ]] || die "build.config.rock not found in kernel source"
 [[ -s "$WORKSPACE/build/build.sh" ]] || die "GKI build/build.sh not found in workspace"
 
