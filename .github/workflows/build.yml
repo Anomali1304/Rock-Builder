@@ -58,7 +58,7 @@ on:
           - BakaSU
         default: Vanilla
       modules:
-        description: Module names separated by commas. Empty builds all modules.
+        description: Module names separated by commas. Empty packages the required module list (198 modules).
         required: false
         type: string
         default: ""
