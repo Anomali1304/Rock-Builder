@@ -323,7 +323,7 @@ source = source[:start] + (
     "const char linux_banner[] =\n"
     '\t"Linux version " UTS_RELEASE\n'
     f'\t" (" {compiler_c} ") " UTS_VERSION "\\n";'
-)
+ + source[end:]
 version_file.write_text(source)
 PY
 if [[ "$CLONE_EXTERNAL" == "true" ]]; then
