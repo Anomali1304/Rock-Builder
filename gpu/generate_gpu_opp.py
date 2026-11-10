@@ -71,7 +71,7 @@ if not aging:
     raise SystemExit("Cannot locate g_aging_table")
 def extend_row(m):
     row = int(m.group(1))
-    row_text = re.sub(r"/\\*.*?\\*/|//[^\\n]*", "", m.group(2), flags=re.S)
+    row_text = re.sub(r"/\*.*?\*/|//[^\n]*", "", m.group(2), flags=re.S)
     vals = [v.strip() for v in row_text.split(",") if v.strip()]
     if len(vals) != 45:
         raise SystemExit(f"Aging row {row}: expected 45 values, found {len(vals)}")
