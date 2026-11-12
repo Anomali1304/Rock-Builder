@@ -90,6 +90,16 @@ on:
         required: true
         type: boolean
         default: false
+      gpu_lowest_opp:
+        description: Replace the existing lowest 390 MHz OPP. Keeps the OPP count unchanged.
+        required: true
+        type: choice
+        options:
+          - "390"
+          - "300"
+          - "250"
+          - "187.5"
+        default: "187.5"
       gpu_undervolt_step:
         description: Per-OPP undervolt step. 625 units = 6.25 mV
         required: true
@@ -130,6 +140,7 @@ jobs:
       GPU_OC_TARGET: ${{ inputs.gpu_oc_target }}
       GPU_BATTERY_EFFICIENCY: ${{ inputs.gpu_battery_efficiency }}
       GPU_UNDERVOLT_STEP: ${{ inputs.gpu_undervolt_step }}
+      GPU_LOWEST_OPP: ${{ inputs.gpu_lowest_opp }}
     steps:
       - name: Checkout builder
         uses: actions/checkout@v4
