@@ -82,6 +82,8 @@ def rewrite_opp(match):
     old_volt = int(match.group(2))
     aging = int(match.group(5))
     power = int(match.group(6))
+    posdiv = match.group(4).strip()
+    output_freq = freq
 
     if freq in BASELINE:
         volt = BASELINE[freq]
@@ -90,13 +92,22 @@ def rewrite_opp(match):
     else:
         raise SystemExit(f"Unexpected OPP frequency: {freq}")
 
+    if idle_choice == "187.5":
+        if freq == 415000:
+            output_freq = 390000
+            posdiv = "POSDIV_POWER_4"
+        elif freq == 390000:
+            output_freq = 187500
+            posdiv = "POSDIV_POWER_8"
+
     volt = max(VGPU_MIN, volt - undervolt)
     vsram = volt if volt > 75000 else VSRAM_FIXED
-    return f"GPUOP({freq}, {volt}, {vsram}, {match.group(4).strip()}, {aging}, {power})"
+    return f"GPUOP({output_freq}, {volt}, {vsram}, {posdiv}, {aging}, {power})"
 
 body = pattern.sub(rewrite_opp, body)
 idle = IDLE_OPP_OPTIONS[idle_choice]
-if idle:
+append_idle = bool(idle) and idle_choice != "187.5"
+if append_idle:
     idle_freq, idle_posdiv = idle
     if idle_freq < 187500 or idle_freq > 475000:
         raise SystemExit("Idle OPP is outside the supported POSDIV8 range")
@@ -124,7 +135,7 @@ def extend_aging_row(match):
     expected = len(matches)
     if len(values) != expected:
         raise SystemExit(f"Aging row {row}: expected {expected} values, found {len(values)}")
-    values.append("625" if row == 0 and idle else "0")
+    values.append("625" if row == 0 and append_idle else "0")
     return "{ /* aging table " + str(row) + " */\n\t\t" + ", ".join(values) + ",\n\t}"
 
 aging_body, row_count = re.subn(
@@ -143,19 +154,34 @@ final_table = re.search(
     re.S,
 )
 final_entries = list(pattern.finditer(final_table.group(1)))
-expected_count = len(matches) + (1 if idle else 0)
+expected_count = len(matches) + (1 if append_idle else 0)
 if len(final_entries) != expected_count:
     raise SystemExit(f"Expected {expected_count} final OPPs, found {len(final_entries)}")
 
 freqs = [int(entry.group(1)) for entry in final_entries]
 if any(freqs[i] <= freqs[i + 1] for i in range(len(freqs) - 1)):
     raise SystemExit("GPU frequencies are not strictly descending")
-if idle and (freqs[-1] != idle[0] or final_entries[-1].group(4).strip() != idle[1]):
+if append_idle and (freqs[-1] != idle[0] or final_entries[-1].group(4).strip() != idle[1]):
     raise SystemExit("Appended idle OPP does not match the selected frequency/divider")
+if idle_choice == "187.5":
+    if freqs[-2:] != [390000, 187500]:
+        raise SystemExit("Expected final OPPs to be 390 MHz and 187.5 MHz")
+    if final_entries[-2].group(4).strip() != "POSDIV_POWER_4":
+        raise SystemExit("390 MHz replacement must use POSDIV_POWER_4")
+    if final_entries[-1].group(4).strip() != "POSDIV_POWER_8":
+        raise SystemExit("187.5 MHz replacement must use POSDIV_POWER_8")
+    if int(final_entries[-1].group(2)) != max(VGPU_MIN, 57500 - undervolt):
+        raise SystemExit("187.5 MHz replacement voltage does not match the selected baseline")
 
 header.write_text(text)
 print("GPU battery-efficiency tuning applied.")
 print("AVS: disabled. Stock OPP voltages: rebased to the supplied runtime table.")
 print(f"Undervolt: {undervolt / 100:.2f} mV per OPP.")
-print(f"Existing 390 MHz OPP retained. Appended idle OPP: {idle_choice} MHz.")
+if idle_choice == "187.5":
+    print("Replaced stock 415 MHz with 390 MHz and stock 390 MHz with 187.5 MHz.")
+    print(f"187.5 MHz VGPU: {max(VGPU_MIN, 57500 - undervolt)}; VSRAM: {VSRAM_FIXED}.")
+elif append_idle:
+    print(f"Stock 390 MHz OPP retained. Appended idle OPP: {idle_choice} MHz.")
+else:
+    print("Stock 45-entry GPU OPP table retained.")
 print(f"Final signed GPU OPP count: {expected_count}.")
