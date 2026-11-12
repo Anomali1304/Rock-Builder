@@ -3,13 +3,22 @@ import pathlib
 import re
 import sys
 
-if len(sys.argv) != 3:
-    raise SystemExit("usage: apply_gpu_efficiency.py HEADER UNDERVOLT_STEP")
+if len(sys.argv) != 4:
+    raise SystemExit("usage: apply_gpu_efficiency.py HEADER UNDERVOLT_STEP LOWEST_OPP")
 
 header = pathlib.Path(sys.argv[1])
 undervolt = int(sys.argv[2])
+lowest_choice = sys.argv[3]
 
-LOWEST_FREQ = 187500
+LOWEST_OPP_OPTIONS = {
+    "390": (390000, "POSDIV_POWER_4"),
+    "300": (300000, "POSDIV_POWER_8"),
+    "250": (250000, "POSDIV_POWER_8"),
+    "187.5": (187500, "POSDIV_POWER_8"),
+}
+if lowest_choice not in LOWEST_OPP_OPTIONS:
+    raise SystemExit("Lowest OPP must be 390, 300, 250, or 187.5 MHz")
+LOWEST_FREQ, LOWEST_POSDIV = LOWEST_OPP_OPTIONS[lowest_choice]
 PMIC_STEP = 625
 VGPU_MIN = 50000
 VSRAM_THRESHOLD = 75000
@@ -87,7 +96,7 @@ def rewrite_opp(match):
 
     if freq == 390000:
         freq = LOWEST_FREQ
-        posdiv = "POSDIV_POWER_8"
+        posdiv = LOWEST_POSDIV
 
     volt = max(VGPU_MIN, volt - undervolt)
     vsram = volt if volt > VSRAM_THRESHOLD else VSRAM_FIXED
@@ -104,8 +113,8 @@ entries = [(int(m.group(1)), int(m.group(2)), int(m.group(3)), m.group(4).strip(
            for m in final_matches]
 if len(entries) != old_count:
     raise SystemExit("Final GPU OPP count changed unexpectedly")
-if entries[-1][0] != LOWEST_FREQ or entries[-1][3] != "POSDIV_POWER_8":
-    raise SystemExit("The final OPP must be 187.5 MHz using POSDIV8")
+if entries[-1][0] != LOWEST_FREQ or entries[-1][3] != LOWEST_POSDIV:
+    raise SystemExit(f"The final OPP must be {LOWEST_FREQ} kHz using {LOWEST_POSDIV}")
 if any(entries[i][0] <= entries[i + 1][0] for i in range(len(entries) - 1)):
     raise SystemExit("GPU frequencies are not strictly descending")
 for freq, volt, vsram, posdiv in entries:
@@ -124,5 +133,5 @@ header.write_text(text)
 print("GPU battery-efficiency tuning applied.")
 print("AVS: disabled. Stock OPP voltages: rebased to the supplied runtime table.")
 print(f"Undervolt: {undervolt / 100:.2f} mV per OPP.")
-print("Replaced the 390 MHz lowest OPP with 187.5 MHz using POSDIV8.")
+print(f"Lowest OPP: {LOWEST_FREQ / 1000:g} MHz using {LOWEST_POSDIV}.")
 print(f"Final signed GPU OPP count remains {len(entries)}.")
