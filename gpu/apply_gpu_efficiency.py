@@ -135,7 +135,8 @@ def extend_aging_row(match):
     expected = len(matches)
     if len(values) != expected:
         raise SystemExit(f"Aging row {row}: expected {expected} values, found {len(values)}")
-    values.append("625" if row == 0 and append_idle else "0")
+    if append_idle:
+        values.append("625" if row == 0 else "0")
     return "{ /* aging table " + str(row) + " */\n\t\t" + ", ".join(values) + ",\n\t}"
 
 aging_body, row_count = re.subn(
