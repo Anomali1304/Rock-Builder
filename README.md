@@ -19,6 +19,7 @@ Automated kernel builder for Xiaomi Rock (MT6789), powered by GitHub Actions.
 | Separate Kernel / Modules ZIP | Complete |
 | Replaceable MT6789 GPU OPP Header | Complete |
 | Automatic GPU OPP Overclock | Complete |
+| Experimental GPU Battery Efficiency Tuning | Added, device testing pending |
 
 ## Features
 
@@ -32,6 +33,8 @@ Automated kernel builder for Xiaomi Rock (MT6789), powered by GitHub Actions.
 - Override the MT6789 GPU frequency and voltage table from `gpu/gpufreq_mt6789.h`.
 - Select a GPU maximum frequency from 1100 to 1500 MHz in 25 MHz steps.
 - Automatically patch `LIMIT_THERMAL_AP` to allow generated GPU OPPs when GPU OC is enabled. Other GPU limiters remain active.
+- Optionally disable GPU AVS and use the measured MT6789 runtime voltage curve as the fixed OPP baseline.
+- Apply a selectable per-OPP undervolt in 6.25 mV steps.
 
 ## Build
 
@@ -52,13 +55,17 @@ Automated kernel builder for Xiaomi Rock (MT6789), powered by GitHub Actions.
 | Root Variant | Vanilla, KSU Next, BakaSU |
 | External Modules | Enabled or Disabled |
 | GPU OC Target | 1100 to 1500 MHz, 25 MHz steps |
+| GPU Battery Efficiency | Enabled or Disabled, default Disabled |
+| GPU Undervolt Step | 0, 6.25, or 12.5 mV per OPP |
 | Module Selection | Required list by default, or comma-separated names |
 
 Leave the module selection empty to build all configured modules.
 
 ## GPU Overclock
 
-The builder copies `gpu/gpufreq_mt6789.h` over the kernel source header before compilation. Set the GPU OC target in the workflow. The generator adds OPPs above 1100 MHz in 25 MHz steps. It extrapolates voltage from the first five stock OPPs, rounds up to the 625-unit PMIC step, validates hardware limits, and updates AVS, aging, segment, and MCL50 indices. AVS remains enabled. Calculated voltage is a starting point and does not guarantee silicon stability.
+The builder copies `gpu/gpufreq_mt6789.h` over the kernel source header before compilation. Set the GPU OC target in the workflow. The generator adds OPPs above 1100 MHz in 25 MHz steps. It extrapolates voltage from the first five stock OPPs, rounds up to the 625-unit PMIC step, validates hardware limits, and updates AVS, aging, segment, and MCL50 indices.
+
+GPU Battery Efficiency is a separate experimental option and is disabled by default. When enabled, it disables AVS, rebases the stock OPP voltages to the runtime table supplied from the target MT6789 device, and applies the selected voltage offset. The stock GPU frequency table and all 45 OPP frequencies remain unchanged. Only the voltage values are adjusted using the measured MT6789 runtime voltage curve and selected undervolt step. AVS stays disabled. The MT6789 segment OPP window is set to the full signed table. The generator validates frequency ordering, table count, PMIC voltage steps, VGPU/VSRAM delta, and divider selection. These settings are a test baseline, not a guarantee of stability or battery-life improvement. Test one voltage step at a time and verify the signed and working OPP tables on the device.
 
 ## Output
 
