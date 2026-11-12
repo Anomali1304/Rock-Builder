@@ -295,6 +295,25 @@ if [[ "$GPU_BATTERY_EFFICIENCY" == "true" ]]; then
     log "Applying experimental GPU battery-efficiency tuning"
     python3 "$ROOT_DIR/gpu/apply_gpu_efficiency.py" \
         "$GPU_HEADER_TARGET" "$GPU_MIN_FREQ" "$GPU_UNDERVOLT_STEP"
+    GPUFREQ_SOURCE="$KERNEL_DIR/drivers/gpu/mediatek/gpufreq/v2/gpufreq_mt6789.c"
+    [[ -s "$GPUFREQ_SOURCE" ]] || die "MT6789 GPU driver source missing"
+    python3 - "$GPUFREQ_SOURCE" <<'PY'
+import pathlib
+import re
+import sys
+
+path = pathlib.Path(sys.argv[1])
+source = path.read_text()
+pattern = r"if \(segment_id == MT6789_SEGMENT\)\s*g_gpu.segment_upbound = 7;\s*else\s*g_gpu.segment_upbound = 0;"
+updated, count = re.subn(pattern, "g_gpu.segment_upbound = 0;", source, count=1)
+if count == 1:
+    path.write_text(updated)
+    print("GPU segment OPP window set to the full signed table.")
+elif re.search(r"g_gpu.segment_upbound\s*=\s*0;", source):
+    print("GPU segment OPP window already exposes the full signed table.")
+else:
+    raise SystemExit("Cannot safely identify the MT6789 segment OPP window")
+PY
 else
     log "GPU battery-efficiency tuning disabled. Keeping the standard GPU table."
 fi
