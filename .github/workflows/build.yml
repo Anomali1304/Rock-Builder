@@ -91,7 +91,7 @@ on:
         type: boolean
         default: false
       gpu_lowest_opp:
-        description: Replace the existing lowest 390 MHz OPP. Keeps the OPP count unchanged.
+        description: Append a selectable idle OPP while retaining the stock 390 MHz OPP.
         required: true
         type: choice
         options:
