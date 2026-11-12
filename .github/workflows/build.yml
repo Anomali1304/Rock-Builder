@@ -85,6 +85,30 @@ on:
           - "1475"
           - "1500"
         default: "1100"
+      gpu_battery_efficiency:
+        description: Enable experimental MT6789 GPU battery-efficiency tuning
+        required: true
+        type: boolean
+        default: false
+      gpu_min_freq:
+        description: Lowest GPU OPP when battery-efficiency tuning is enabled
+        required: true
+        type: choice
+        options:
+          - "365"
+          - "340"
+          - "315"
+          - "290"
+        default: "365"
+      gpu_undervolt_step:
+        description: Per-OPP undervolt step. 625 units = 6.25 mV
+        required: true
+        type: choice
+        options:
+          - "0"
+          - "625"
+          - "1250"
+        default: "0"
       clone_external_modules:
         description: Clone fixed external modules from Asmodeus7999/MTK_kernel_modules
         required: true
@@ -114,6 +138,9 @@ jobs:
       KERNEL_LOCALVERSION: ${{ inputs.localversion }}
       CLONE_EXTERNAL_MODULES: ${{ inputs.clone_external_modules }}
       GPU_OC_TARGET: ${{ inputs.gpu_oc_target }}
+      GPU_BATTERY_EFFICIENCY: ${{ inputs.gpu_battery_efficiency }}
+      GPU_MIN_FREQ: ${{ inputs.gpu_min_freq }}
+      GPU_UNDERVOLT_STEP: ${{ inputs.gpu_undervolt_step }}
     steps:
       - name: Checkout builder
         uses: actions/checkout@v4
