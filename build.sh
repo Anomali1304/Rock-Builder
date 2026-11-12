@@ -288,6 +288,17 @@ GPU_OC_TARGET="${GPU_OC_TARGET:-1100}"
 python3 "$ROOT_DIR/gpu/generate_gpu_opp.py" "$GPU_HEADER_TARGET" "$GPU_OC_TARGET"
 log "GPU maximum frequency: ${GPU_OC_TARGET} MHz"
 
+GPU_BATTERY_EFFICIENCY="${GPU_BATTERY_EFFICIENCY:-false}"
+GPU_MIN_FREQ="${GPU_MIN_FREQ:-365}"
+GPU_UNDERVOLT_STEP="${GPU_UNDERVOLT_STEP:-0}"
+if [[ "$GPU_BATTERY_EFFICIENCY" == "true" ]]; then
+    log "Applying experimental GPU battery-efficiency tuning"
+    python3 "$ROOT_DIR/gpu/apply_gpu_efficiency.py" \
+        "$GPU_HEADER_TARGET" "$GPU_MIN_FREQ" "$GPU_UNDERVOLT_STEP"
+else
+    log "GPU battery-efficiency tuning disabled. Keeping the standard GPU table."
+fi
+
 if (( GPU_OC_TARGET > 1100 )); then
     GPU_PPM_SOURCE="$KERNEL_DIR/drivers/gpu/mediatek/gpufreq/v2/gpuppm.c"
     [[ -s "$GPU_PPM_SOURCE" ]] || die "GPU PPM source missing: $GPU_PPM_SOURCE"
