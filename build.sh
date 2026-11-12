@@ -290,10 +290,11 @@ log "GPU maximum frequency: ${GPU_OC_TARGET} MHz"
 
 GPU_BATTERY_EFFICIENCY="${GPU_BATTERY_EFFICIENCY:-false}"
 GPU_UNDERVOLT_STEP="${GPU_UNDERVOLT_STEP:-0}"
+GPU_LOWEST_OPP="${GPU_LOWEST_OPP:-187.5}"
 if [[ "$GPU_BATTERY_EFFICIENCY" == "true" ]]; then
     log "Applying experimental GPU battery-efficiency tuning"
     python3 "$ROOT_DIR/gpu/apply_gpu_efficiency.py" \
-        "$GPU_HEADER_TARGET" "$GPU_UNDERVOLT_STEP"
+        "$GPU_HEADER_TARGET" "$GPU_UNDERVOLT_STEP" "$GPU_LOWEST_OPP"
     GPUFREQ_SOURCE="$KERNEL_DIR/drivers/gpu/mediatek/gpufreq/v2/gpufreq_mt6789.c"
     [[ -s "$GPUFREQ_SOURCE" ]] || die "MT6789 GPU driver source missing"
     python3 - "$GPUFREQ_SOURCE" <<'PY'
