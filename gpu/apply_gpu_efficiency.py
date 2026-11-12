@@ -42,7 +42,7 @@ if undervolt % PMIC_STEP:
 
 text = header.read_text()
 macro, count = re.subn(
-    r"(?m)^#define GPUFREQ_AVS_ENABLE\\s+\\(1\\)",
+    r"(?m)^#define GPUFREQ_AVS_ENABLE\s+\(1\)",
     "#define GPUFREQ_AVS_ENABLE              (0)",
     text,
 )
@@ -51,7 +51,7 @@ if count != 1:
 text = macro
 
 table = re.search(
-    r"(struct gpufreq_opp_info g_default_gpu\\[\\] = \\{)(.*?)(\\n\\};)",
+    r"(struct gpufreq_opp_info g_default_gpu\[\] = \{)(.*?)(\n\};)",
     text,
     re.S,
 )
@@ -59,8 +59,8 @@ if not table:
     raise SystemExit("Cannot locate g_default_gpu")
 body = table.group(2)
 pattern = re.compile(
-    r"GPUOP\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,"
-    r"\\s*([^,]+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\)"
+    r"GPUOP\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,"
+    r"\s*([^,]+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)"
 )
 matches = list(pattern.finditer(body))
 if len(matches) < 45:
@@ -102,14 +102,14 @@ for freq in low_freqs:
     volt = max(VGPU_MIN, 57500 - undervolt)
     vsram = volt if volt > VSRAM_THRESHOLD else VSRAM_FIXED
     low_lines.append(
-        f"\\tGPUOP({freq}, {volt}, {vsram}, POSDIV_POWER_8, 625, 0), "
+        f"\tGPUOP({freq}, {volt}, {vsram}, POSDIV_POWER_8, 625, 0), "
         "/* battery-efficiency low OPP */"
     )
-body = body.rstrip() + "\\n" + "\\n".join(low_lines)
+body = body.rstrip() + "\n" + "\n".join(low_lines)
 text = text[:table.start(2)] + body + text[table.end(2):]
 
 aging = re.search(
-    r"(unsigned int g_aging_table\\[\\]\\[SIGNED_OPP_GPU_NUM\\] = \\{)(.*?)(\\n\\};)",
+    r"(unsigned int g_aging_table\[\]\[SIGNED_OPP_GPU_NUM\] = \{)(.*?)(\n\};)",
     text,
     re.S,
 )
@@ -118,7 +118,7 @@ if not aging:
 
 def extend_aging_row(match):
     row = int(match.group(1))
-    row_body = re.sub(r"/\\*.*?\\*/|//[^\\n]*", "", match.group(2), flags=re.S)
+    row_body = re.sub(r"/\*.*?\*/|//[^\n]*", "", match.group(2), flags=re.S)
     values = [value.strip() for value in row_body.split(",") if value.strip()]
     if len(values) != old_count:
         raise SystemExit(
@@ -126,12 +126,12 @@ def extend_aging_row(match):
         )
     values.extend(["625" if row == 0 else "0"] * len(low_freqs))
     return (
-        "{ /* aging table " + str(row) + " */\\n\\t\\t"
-        + ", ".join(values) + ",\\n\\t}"
+        "{ /* aging table " + str(row) + " */\n\t\t"
+        + ", ".join(values) + ",\n\t}"
     )
 
 aging_body, rows = re.subn(
-    r"\\{\\s*/\\*\\s*aging table (\\d+)\\s*\\*/(.*?)\\}",
+    r"\{\s*/\*\s*aging table (\d+)\s*\*/(.*?)\}",
     extend_aging_row,
     aging.group(2),
     flags=re.S,
