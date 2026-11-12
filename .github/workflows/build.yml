@@ -90,16 +90,6 @@ on:
         required: true
         type: boolean
         default: false
-      gpu_lowest_opp:
-        description: 187.5 replaces stock 415/390 MHz entries. 300/250 append an OPP.
-        required: true
-        type: choice
-        options:
-          - "390"
-          - "300"
-          - "250"
-          - "187.5"
-        default: "187.5"
       gpu_undervolt_step:
         description: Per-OPP undervolt step. 625 units = 6.25 mV
         required: true
