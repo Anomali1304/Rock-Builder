@@ -47,7 +47,7 @@ if undervolt % PMIC_STEP:
 
 text = header.read_text()
 text, avs_count = re.subn(
-    r"(?m)^#define GPUFREQ_AVS_ENABLE\\s+\\(1\\)",
+    r"(?m)^#define GPUFREQ_AVS_ENABLE\s+\(1\)",
     "#define GPUFREQ_AVS_ENABLE              (0)",
     text,
 )
@@ -55,7 +55,7 @@ if avs_count != 1:
     raise SystemExit(f"Expected one enabled GPUFREQ_AVS_ENABLE macro, found {avs_count}")
 
 table = re.search(
-    r"(struct gpufreq_opp_info g_default_gpu\\[\\] = \\{)(.*?)(\\n\\};)",
+    r"(struct gpufreq_opp_info g_default_gpu\[\] = \{)(.*?)(\n\};)",
     text,
     re.S,
 )
@@ -64,8 +64,8 @@ if not table:
 
 body = table.group(2)
 pattern = re.compile(
-    r"GPUOP\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,"
-    r"\\s*([^,]+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\)"
+    r"GPUOP\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,"
+    r"\s*([^,]+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)"
 )
 matches = list(pattern.finditer(body))
 if len(matches) < 45:
@@ -103,14 +103,14 @@ if idle:
     idle_volt = max(VGPU_MIN, 55000 - undervolt)
     idle_vsram = VSRAM_FIXED
     body = body.rstrip() + (
-        f"\\n\\tGPUOP({idle_freq}, {idle_volt}, {idle_vsram}, "
-        f"{idle_posdiv}, 625, 0), /* appended idle OPP */\\n"
+        f"\n\tGPUOP({idle_freq}, {idle_volt}, {idle_vsram}, "
+        f"{idle_posdiv}, 625, 0), /* appended idle OPP */\n"
     )
 
 text = text[:table.start(2)] + body + text[table.end(2):]
 
 aging = re.search(
-    r"(unsigned int g_aging_table\\[\\]\\[SIGNED_OPP_GPU_NUM\\] = \\{)(.*?)(\\n\\};)",
+    r"(unsigned int g_aging_table\[\]\[SIGNED_OPP_GPU_NUM\] = \{)(.*?)(\n\};)",
     text,
     re.S,
 )
@@ -119,16 +119,16 @@ if not aging:
 
 def extend_aging_row(match):
     row = int(match.group(1))
-    raw = re.sub(r"/\\*.*?\\*/|//[^\\n]*", "", match.group(2), flags=re.S)
+    raw = re.sub(r"/\*.*?\*/|//[^\n]*", "", match.group(2), flags=re.S)
     values = [value.strip() for value in raw.split(",") if value.strip()]
     expected = len(matches)
     if len(values) != expected:
         raise SystemExit(f"Aging row {row}: expected {expected} values, found {len(values)}")
     values.append("625" if row == 0 and idle else "0")
-    return "{ /* aging table " + str(row) + " */\\n\\t\\t" + ", ".join(values) + ",\\n\\t}"
+    return "{ /* aging table " + str(row) + " */\n\t\t" + ", ".join(values) + ",\n\t}"
 
 aging_body, row_count = re.subn(
-    r"\\{\\s*/\\*\\s*aging table (\\d+)\\s*\\*/(.*?)\\}",
+    r"\{\s*/\*\s*aging table (\d+)\s*\*/(.*?)\}",
     extend_aging_row,
     aging.group(2),
     flags=re.S,
@@ -137,12 +137,12 @@ if row_count != 4:
     raise SystemExit(f"Expected four aging rows, found {row_count}")
 text = text[:aging.start(2)] + aging_body + text[aging.end(2):]
 
-final_body = re.search(
-    r"struct gpufreq_opp_info g_default_gpu\\[\\] = \\{(.*?)\\n\\};",
+final_table = re.search(
+    r"struct gpufreq_opp_info g_default_gpu\[\] = \{(.*?)\n\};",
     text,
     re.S,
-).group(1)
-final_entries = list(pattern.finditer(final_body))
+)
+final_entries = list(pattern.finditer(final_table.group(1)))
 expected_count = len(matches) + (1 if idle else 0)
 if len(final_entries) != expected_count:
     raise SystemExit(f"Expected {expected_count} final OPPs, found {len(final_entries)}")
