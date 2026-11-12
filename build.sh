@@ -290,7 +290,7 @@ log "GPU maximum frequency: ${GPU_OC_TARGET} MHz"
 
 GPU_BATTERY_EFFICIENCY="${GPU_BATTERY_EFFICIENCY:-false}"
 GPU_UNDERVOLT_STEP="${GPU_UNDERVOLT_STEP:-0}"
-GPU_LOWEST_OPP="${GPU_LOWEST_OPP:-187.5}"
+GPU_LOWEST_OPP="390"
 if [[ "$GPU_BATTERY_EFFICIENCY" == "true" ]]; then
     log "Applying experimental GPU battery-efficiency tuning"
     python3 "$ROOT_DIR/gpu/apply_gpu_efficiency.py" \
